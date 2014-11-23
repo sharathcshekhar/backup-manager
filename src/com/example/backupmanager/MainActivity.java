@@ -60,6 +60,8 @@ public class MainActivity extends Activity {
 		startService(intent);
 		serviceStarted = true;
 		*/
+		//Intent intent = new Intent(getApplicationContext(), BackupService.class);
+		//startService(intent);
 	}
 
 	@Override
@@ -96,12 +98,13 @@ public class MainActivity extends Activity {
 	        }
 	        if (!serviceStarted) {
 	        	Intent intent = new Intent(getApplicationContext(), BackupService.class);
-	        	Log.i("DbAuthLog", "Restarting Service");
+	        	Log.i("DbAuthLog", "Starting Service");
 	        	startService(intent);
 	    		serviceStarted = true;
 	        }
 	    }
 	}
+	
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {

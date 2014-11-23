@@ -18,6 +18,7 @@ import com.dropbox.client2.session.Session.AccessType;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -26,30 +27,33 @@ import android.os.Messenger;
 import android.util.Log;
 
 public class BackupService extends Service {
-	//	DropboxAPI<AndroidAuthSession> mDBApi = null;	
+		DropboxAPI<AndroidAuthSession> mDBApi = null;	
 		//final static private String APP_KEY = "3kwvg49qlt1ielo";
 		//final static private String APP_SECRET = "5gbohd30l6hkzrq";
 		
 	//	final static private AccessType ACCESS_TYPE = AccessType.AUTO;
 		
-		// And later in some initialization function:
+	//	 And later in some initialization function:
 		
-	//	AppKeyPair appKeys = new AppKeyPair(APP_KEY, APP_SECRET);
+		//AppKeyPair appKeys = new AppKeyPair(APP_KEY, APP_SECRET);
 		
-//		AndroidAuthSession session = new AndroidAuthSession(appKeys, ACCESS_TYPE);
+		//AndroidAuthSession session = new AndroidAuthSession(appKeys, ACCESS_TYPE);
 		
-		public DropboxAPI<AndroidAuthSession> mDBApi = null;
+		//public DropboxAPI<AndroidAuthSession> mDBApi = new DropboxAPI<AndroidAuthSession>(session);
 		
 		public BackupService() {
 			Log.d("CSE622", "Instantiating service");
+			
 			mDBApi = MainActivity.mDBApi;
+			/*
 			try {
 				Log.d("BACKUP_SERVICE", MainActivity.mDBApi.accountInfo().toString());
 			} catch (DropboxException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+			*/
+			Log.d("BACKUP_SERVICE","Starting DropBox Authentication");
 			//mDBApi.getSession().startOAuth2Authentication(BackupService.this);
 		}
 	/*
@@ -75,30 +79,59 @@ public class BackupService extends Service {
 	        	String filename = data.getString("filename");
 	        	Log.d("BACKUP_SERVICE", "filename");
 	        	
+	        	new DropBoxUpload().execute();
+	        	
 	        	//File file = new File(MainActivity.CACHE_PATH, filename);
 	        	
 	        	//File file = new File("working-draft.txt");
 	        	//file.
 	        	//FileInputStream inputStream;
-	        	Entry response = null;
-	        	InputStream inputStream = new ByteArrayInputStream("test".getBytes());
+	        //	Entry response = null;
+	        /* InputStream inputStream = new ByteArrayInputStream("test".getBytes());
+	        	*/
+	        	/*
 	        	try {
 					//inputStream = new FileInputStream(file);
-	        		Log.d("BACKUP_SERVICE", MainActivity.mDBApi.toString());
+	        		Log.d("BACKUP_SERVICE", MainActivity.mDBApi.accountInfo().toString());
 	        		//MainActivity.mDBApi.
+					//response = MainActivity.mDBApi.putFile("/test.txt", inputStream,
+						//	"test".length(), null, null);
+				} catch (DropboxException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}*/ /*catch (FileNotFoundException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}*/
+	        	//Log.i("DbExampleLog", "The uploaded file's rev is: " + ((response != null)? response.rev : "null"));
+	        	
+	        }
+	     }
+		
+		class DropBoxUpload extends AsyncTask<Void, Void, Void> {
+
+			@Override
+			protected Void doInBackground(Void... params) {
+				// TODO Auto-generated method stub
+				InputStream inputStream = new ByteArrayInputStream("test".getBytes());
+				Entry response = null;
+				try {
+					Log.d("BACKUP_SERVICE", MainActivity.mDBApi.accountInfo().toString());
+					
 					response = MainActivity.mDBApi.putFile("/test.txt", inputStream,
 							"test".length(), null, null);
 				} catch (DropboxException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				} /*catch (FileNotFoundException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}*/
-	        	Log.i("DbExampleLog", "The uploaded file's rev is: " + ((response != null)? response.rev : "null"));
-	        	
-	        }
-	     }
+				} 
+				Log.i("DbExampleLog", "The uploaded file's rev is: " + ((response != null)? response.rev : "null"));
+				
+				return null;
+			}
+
+		   
+		}
+		
 		
 		public void BackupToDropBox(String filename) {
 			
