@@ -28,87 +28,30 @@ import android.util.Log;
 
 public class BackupService extends Service {
 		DropboxAPI<AndroidAuthSession> mDBApi = null;	
-		//final static private String APP_KEY = "3kwvg49qlt1ielo";
-		//final static private String APP_SECRET = "5gbohd30l6hkzrq";
-		
-	//	final static private AccessType ACCESS_TYPE = AccessType.AUTO;
-		
-	//	 And later in some initialization function:
-		
-		//AppKeyPair appKeys = new AppKeyPair(APP_KEY, APP_SECRET);
-		
-		//AndroidAuthSession session = new AndroidAuthSession(appKeys, ACCESS_TYPE);
-		
-		//public DropboxAPI<AndroidAuthSession> mDBApi = new DropboxAPI<AndroidAuthSession>(session);
-		
 		public BackupService() {
 			Log.d("CSE622", "Instantiating service");
-			
 			mDBApi = MainActivity.mDBApi;
-			/*
-			try {
-				Log.d("BACKUP_SERVICE", MainActivity.mDBApi.accountInfo().toString());
-			} catch (DropboxException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			*/
-			Log.d("BACKUP_SERVICE","Starting DropBox Authentication");
-			//mDBApi.getSession().startOAuth2Authentication(BackupService.this);
 		}
-	/*
+		
+		/*
+		
 		public int onStartCommand (Intent intent, int flags, int startId) {
 			
-			dbObj param = (dbObj) intent.getSerializableExtra("db"); 
-			mDBApi = param.mDBApi;
-			Log.d("CSE622", "OnStartCommand");
-			return android.app.Service.START_STICKY;
 		}
 		*/
 		
 		class IncomingHandler extends Handler {
-			/*
-			public IncomingHandler() {
-				Log.d("CSE622", "Instantiating Handler");
-			}
-			*/
 			@Override
 	        public void handleMessage(Message msg) {
 	            
 	        	Bundle data = msg.getData();        	
 	        	String filename = data.getString("filename");
-	        	Log.d("BACKUP_SERVICE", "filename");
-	        	
-	        	new DropBoxUpload().execute();
-	        	
-	        	//File file = new File(MainActivity.CACHE_PATH, filename);
-	        	
-	        	//File file = new File("working-draft.txt");
-	        	//file.
-	        	//FileInputStream inputStream;
-	        //	Entry response = null;
-	        /* InputStream inputStream = new ByteArrayInputStream("test".getBytes());
-	        	*/
-	        	/*
-	        	try {
-					//inputStream = new FileInputStream(file);
-	        		Log.d("BACKUP_SERVICE", MainActivity.mDBApi.accountInfo().toString());
-	        		//MainActivity.mDBApi.
-					//response = MainActivity.mDBApi.putFile("/test.txt", inputStream,
-						//	"test".length(), null, null);
-				} catch (DropboxException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}*/ /*catch (FileNotFoundException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}*/
-	        	//Log.i("DbExampleLog", "The uploaded file's rev is: " + ((response != null)? response.rev : "null"));
-	        	
-	        }
+	        	Log.d("BACKUP_SERVICE", filename != null ? filename : "null");
+	           	new DropBoxUpload().execute();
+	         }
 	     }
 		
-		class DropBoxUpload extends AsyncTask<Void, Void, Void> {
+		class DropBoxUpload extends AsyncTask <Void, Void, Void> {
 
 			@Override
 			protected Void doInBackground(Void... params) {
@@ -121,18 +64,15 @@ public class BackupService extends Service {
 					response = MainActivity.mDBApi.putFile("/test.txt", inputStream,
 							"test".length(), null, null);
 				} catch (DropboxException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} 
-				Log.i("DbExampleLog", "The uploaded file's rev is: " + ((response != null)? response.rev : "null"));
+				Log.i("DbExampleLog", "The uploaded file's rev is: " + response != null ? response.rev : "null");
 				
 				return null;
 			}
-
-		   
+	   
 		}
-		
-		
+	
 		public void BackupToDropBox(String filename) {
 			
 		}
@@ -143,5 +83,4 @@ public class BackupService extends Service {
 		public IBinder onBind(Intent intent) {
 			return myMessenger.getBinder();
 		}
-
 }
