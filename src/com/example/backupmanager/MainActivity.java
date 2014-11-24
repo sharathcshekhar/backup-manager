@@ -1,8 +1,11 @@
 package com.example.backupmanager;
 
+import java.io.File;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,12 +17,12 @@ import com.dropbox.client2.session.Session.AccessType;
 
 public class MainActivity extends Activity {
 	
-	static final String CACHE_PATH = "/sdcard/data/data/backup_cache/";
+	static final String CACHE_PATH = Environment.getExternalStorageDirectory().toString() + File.separator + "backup_cache";
 	
 	final static private String APP_KEY = "3kwvg49qlt1ielo";
 	final static private String APP_SECRET = "5gbohd30l6hkzrq";
 	
-	final static private AccessType ACCESS_TYPE = AccessType.DROPBOX;
+	final static private AccessType ACCESS_TYPE = AccessType.AUTO;
 	
 	static AppKeyPair appKeys = new AppKeyPair(APP_KEY, APP_SECRET);
 	

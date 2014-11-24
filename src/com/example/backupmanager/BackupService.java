@@ -1,20 +1,10 @@
 package com.example.backupmanager;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.Serializable;
-
-import org.apache.http.entity.SerializableEntity;
-
-import com.dropbox.client2.DropboxAPI;
-import com.dropbox.client2.DropboxAPI.Entry;
-import com.dropbox.client2.android.AndroidAuthSession;
-import com.dropbox.client2.exception.DropboxException;
-import com.dropbox.client2.session.AppKeyPair;
-import com.dropbox.client2.session.Session.AccessType;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import android.app.Service;
 import android.content.Intent;
@@ -24,15 +14,26 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.RemoteException;
 import android.util.Log;
 
+import com.dropbox.client2.DropboxAPI;
+import com.dropbox.client2.DropboxAPI.DropboxFileInfo;
+import com.dropbox.client2.DropboxAPI.Entry;
+import com.dropbox.client2.android.AndroidAuthSession;
+import com.dropbox.client2.exception.DropboxException;
+
 public class BackupService extends Service {
+		public static final int REMOTE_READ = 0;
+		public static final int REMOTE_WRITE = 1;
+		public static final int REMOTE_READ_DONE = 2;
+		public static final int REMOTE_WRITE_DONE = 3;
+		
 		DropboxAPI<AndroidAuthSession> mDBApi = null;	
 		public BackupService() {
 			Log.d("CSE622", "Instantiating service");
 			mDBApi = MainActivity.mDBApi;
 		}
-		
 		/*
 		
 		public int onStartCommand (Intent intent, int flags, int startId) {
@@ -43,40 +44,104 @@ public class BackupService extends Service {
 		class IncomingHandler extends Handler {
 			@Override
 	        public void handleMessage(Message msg) {
-	            
-	        	Bundle data = msg.getData();        	
-	        	String filename = data.getString("filename");
-	        	Log.d("BACKUP_SERVICE", filename != null ? filename : "null");
-	           	new DropBoxUpload().execute();
+				int msgType = msg.what;
+				Bundle data = msg.getData();
+				String filename = data.getString("filename");
+				Messenger replyMsg = msg.replyTo;
+			    switch(msgType) {
+			    case REMOTE_READ:
+			    	Log.d("BACKUP_SERVICE", "READ msg filename: " + filename != null ? filename : "null");
+			    	DropBoxParams r_params = new DropBoxParams();
+			    	r_params.mFilename = filename;
+			    	r_params.mResp = replyMsg;
+			    	new DropBoxDownload().execute(r_params);
+			    	break;
+			    case REMOTE_WRITE:
+			    	Log.d("BACKUP_SERVICE", "WRITE msg filename: " + filename != null ? filename : "null");
+			    	DropBoxParams w_params = new DropBoxParams();
+			    	w_params.mFilename = filename;
+			    	w_params.mResp = replyMsg;
+		           	new DropBoxUpload().execute(w_params);
+		           	break;
+			    default:
+			    	Log.d("BACKUP_SERVICE", "Unknown command");
+			    	break;
+			    }
 	         }
 	     }
+
+		class DropBoxParams {
+			String mFilename;
+			Messenger mResp;
+		}
 		
-		class DropBoxUpload extends AsyncTask <Void, Void, Void> {
+		class DropBoxDownload extends AsyncTask <DropBoxParams, Void, Void> {
 
 			@Override
-			protected Void doInBackground(Void... params) {
-				// TODO Auto-generated method stub
-				InputStream inputStream = new ByteArrayInputStream("test".getBytes());
-				Entry response = null;
+			protected Void doInBackground(DropBoxParams... params) {
+				String filename = params[0].mFilename;
+				Messenger replyMsg = params[0].mResp;
 				try {
-					Log.d("BACKUP_SERVICE", MainActivity.mDBApi.accountInfo().toString());
-					
-					response = MainActivity.mDBApi.putFile("/test.txt", inputStream,
-							"test".length(), null, null);
+					File file = new File(MainActivity.CACHE_PATH, filename);
+					file.createNewFile();
+					FileOutputStream fos = new FileOutputStream(file);
+					DropboxFileInfo info = MainActivity.mDBApi.getFile(filename, null, fos, null);
+					Log.i("DbExampleLog", "The file's rev is: " + info.getMetadata().rev);
+					replyMsg.send(Message.obtain(null, REMOTE_READ_DONE));
 				} catch (DropboxException e) {
 					e.printStackTrace();
-				} 
-				Log.i("DbExampleLog", "The uploaded file's rev is: " + response != null ? response.rev : "null");
-				
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				return null;
 			}
-	   
-		}
-	
-		public void BackupToDropBox(String filename) {
+			
 			
 		}
+		
+		class DropBoxUpload extends AsyncTask <DropBoxParams, Void, Void> {
 
+			@Override
+			protected Void doInBackground(DropBoxParams... params) {
+				String filename = params[0].mFilename;
+				Messenger replyMsg = params[0].mResp;
+				
+				try {
+					File file = new File(MainActivity.CACHE_PATH, filename);
+					FileInputStream fs = new FileInputStream(file);
+
+					//	InputStream inputStream = new ByteArrayInputStream("test".getBytes());
+					Entry response = null;
+
+					Log.d("BACKUP_SERVICE", MainActivity.mDBApi.accountInfo().toString());
+
+					response = MainActivity.mDBApi.putFile(filename, fs,
+							file.length(), null, null);
+
+					Log.i("DbExampleLog", "The uploaded file's rev is: " + response != null ? response.rev : "null");
+					fs.close();
+					replyMsg.send(Message.obtain(null, REMOTE_WRITE_DONE));
+				} catch (DropboxException e) {
+					e.printStackTrace();
+
+				} catch (FileNotFoundException e1) {
+					e1.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+
+				return null;
+			}
+		}
+	
 		final Messenger myMessenger = new Messenger(new IncomingHandler());
 
 		@Override
