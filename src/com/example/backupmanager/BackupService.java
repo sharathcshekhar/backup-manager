@@ -22,12 +22,14 @@ import com.dropbox.client2.DropboxAPI.DropboxFileInfo;
 import com.dropbox.client2.DropboxAPI.Entry;
 import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.exception.DropboxException;
+import com.dropbox.client2.exception.DropboxServerException;
 
 public class BackupService extends Service {
 		public static final int REMOTE_READ = 0;
 		public static final int REMOTE_WRITE = 1;
 		public static final int REMOTE_READ_DONE = 2;
 		public static final int REMOTE_WRITE_DONE = 3;
+		public static final int REMOTE_READ_FAILED = 4;
 		
 		DropboxAPI<AndroidAuthSession> mDBApi = null;	
 		public BackupService() {
@@ -88,7 +90,19 @@ public class BackupService extends Service {
 					DropboxFileInfo info = MainActivity.mDBApi.getFile(filename, null, fos, null);
 					Log.i("DbExampleLog", "The file's rev is: " + info.getMetadata().rev);
 					replyMsg.send(Message.obtain(null, REMOTE_READ_DONE));
-				} catch (DropboxException e) {
+				} catch (DropboxServerException e) {
+					if (e.error == 404) {
+						try {
+							replyMsg.send(Message.obtain(null, REMOTE_READ_FAILED));
+						} catch (RemoteException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+					} else {
+						e.printStackTrace();
+					}
+				}
+				 catch (DropboxException e) {
 					e.printStackTrace();
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
