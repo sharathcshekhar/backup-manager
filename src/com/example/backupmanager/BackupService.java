@@ -36,6 +36,7 @@ public class BackupService extends Service {
 			Log.d("CSE622", "Instantiating service");
 			mDBApi = MainActivity.mDBApi;
 		}
+		
 		/*
 		
 		public int onStartCommand (Intent intent, int flags, int startId) {
@@ -87,7 +88,14 @@ public class BackupService extends Service {
 					File file = new File(MainActivity.CACHE_PATH, filename);
 					file.createNewFile();
 					FileOutputStream fos = new FileOutputStream(file);
-					DropboxFileInfo info = MainActivity.mDBApi.getFile(filename, null, fos, null);
+					String rev;
+					try {
+						Entry metadata = MainActivity.mDBApi.metadata(filename, 1, null, true, null);
+						rev = metadata.rev;
+					} catch (DropboxServerException e) {
+						rev = null;
+					}
+					DropboxFileInfo info = MainActivity.mDBApi.getFile(filename, rev, fos, null);
 					Log.i("DbExampleLog", "The file's rev is: " + info.getMetadata().rev);
 					replyMsg.send(Message.obtain(null, REMOTE_READ_DONE));
 				} catch (DropboxServerException e) {
