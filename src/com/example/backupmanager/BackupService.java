@@ -88,14 +88,8 @@ public class BackupService extends Service {
 					File file = new File(MainActivity.CACHE_PATH, filename);
 					file.createNewFile();
 					FileOutputStream fos = new FileOutputStream(file);
-					String rev;
-					try {
-						Entry metadata = MainActivity.mDBApi.metadata(filename, 1, null, true, null);
-						rev = metadata.rev;
-					} catch (DropboxServerException e) {
-						rev = null;
-					}
-					DropboxFileInfo info = MainActivity.mDBApi.getFile(filename, rev, fos, null);
+					
+					DropboxFileInfo info = MainActivity.mDBApi.getFile(filename, null, fos, null);
 					Log.i("DbExampleLog", "The file's rev is: " + info.getMetadata().rev);
 					replyMsg.send(Message.obtain(null, REMOTE_READ_DONE));
 				} catch (DropboxServerException e) {
@@ -140,11 +134,19 @@ public class BackupService extends Service {
 
 					//	InputStream inputStream = new ByteArrayInputStream("test".getBytes());
 					Entry response = null;
-
+					String rev;
+					try {
+						Entry metadata = MainActivity.mDBApi.metadata("/" + filename, 1, null, false, null);
+						rev = metadata.rev;
+						Log.d("BACKUP_SERVICE", "Updating existing file");
+					} catch (DropboxServerException e) {
+						rev = null;
+						Log.d("BACKUP_SERVICE", "Exception thrown, Creating new file: " + e.toString());
+					}
 					Log.d("BACKUP_SERVICE", MainActivity.mDBApi.accountInfo().toString());
 
 					response = MainActivity.mDBApi.putFile(filename, fs,
-							file.length(), null, null);
+							file.length(), rev, null);
 
 					Log.i("DbExampleLog", "The uploaded file's rev is: " + response != null ? response.rev : "null");
 					fs.close();
